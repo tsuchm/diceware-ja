@@ -11,17 +11,18 @@ my $conv = Lingua::JA::Hepburn::Passport->new();
 my $count = 0;
 my %dupcheck;
 while( <> ){
-    my( $pos ) = ( m!\((.*?詞)\s! );
-    my( $token, $yomi ) = ( m!代表表記:([^/]+)/(\S+)\s! );
+    my( $pos ) = ( m!\A\((.*?詞)\s! );
+    my( $token, $yomi ) = ( m!代表表記:([^/]+)/([^\s"]+)[\s"]! );
+    next unless $pos and $token and $yomi;
 
-    # next unless $pos =~ m!\A(名|形容|動)詞\Z!;
+    #next unless $pos =~ m!\A(名|形容|動)詞\Z!;
     next unless $pos eq '名詞';
 
     # 1音のみの語(e.g. 蚊)は，発声をうまく聞き取れない可能性が高いから外す
     next if length($yomi) <= 1;
     # 漢字表記1文字以下，かつ，読み2文字以下(e.g. 愛)も，同じ理由で外す．
     #next if length($token) <= 1 and length($yomi) <= 2;
-    # 6音以上は長過ぎるので外す
+    # 7音以上は長過ぎるので外す
     next if length($yomi) >= 6;
     next if length($yomi) >= 5 and length($token) >= 4;
 
@@ -59,6 +60,11 @@ while( <> ){
 
     next if $dupcheck{$yomi}++;
     next if $dupcheck{$romaji}++;
+
+    # 濁音と清音の違いのみしかない語は，片方のみ収録 => 単語が足りなくなった
+    #my $x = $yomi;
+    #$x =~ tr/が-ござ-ぞだ-どば-ぼぱ-ぽ/か-こさ-そた-とは-ほは-ほ/;
+    #next if $dupcheck{$x}++;
 
     printf( "%d%d%d%d%d,%s,%s,%s\n",
 	    int( $count / 1296 ) % 6 + 1,
